@@ -80,7 +80,9 @@ public class MainActivity extends AppCompatActivity {
     private void writeData() {
         String name = edInput.getText().toString();
         int age = Integer.parseInt(tvOutput.getText().toString());
-        mRef.child("user1").child("Name").setValue(name);
-        mRef.child("user1").child("Age").setValue(age);
+
+        String key = mRef.push().getKey();
+        mRef.child(key).child("Name").setValue(name);
+        mRef.child(key).child("Age").setValue(age);
     }
 }
