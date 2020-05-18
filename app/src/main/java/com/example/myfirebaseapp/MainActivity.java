@@ -17,14 +17,15 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
+import java.util.Map;
+
 public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = MainActivity.class.getName();
     EditText edInput;
-    TextView tvOutput;
+    EditText tvOutput;
     private FirebaseDatabase mDatabase;
     private DatabaseReference mRef;
-    private ValueEventListener mListener;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,34 +49,18 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        mListener = new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                String data = dataSnapshot.getValue(String.class);
-                tvOutput.setText(data);
-            }
 
-            @Override
-            public void onCancelled(@NonNull DatabaseError databaseError) {
-
-            }
-        };
-
-        mRef.child("user1").addValueEventListener(mListener);
     }
 
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        mRef.removeEventListener(mListener);
-    }
 
     private void readData() {
         mRef.child("user1").addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                String data = dataSnapshot.getValue(String.class);
-                tvOutput.setText(data);
+
+                Map<String, Object> data= (Map<String, Object>) dataSnapshot.getValue();
+                Log.d(TAG, "onDataChange: "+data.get("Name"));
+                Log.d(TAG, "onDataChange: "+data.get("Age"));
             }
 
             @Override
@@ -93,21 +78,9 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void writeData() {
-        String data = edInput.getText().toString();
-        mRef.child("user1").setValue(data)
-                .addOnSuccessListener(new OnSuccessListener<Void>() {
-                    @Override
-                    public void onSuccess(Void aVoid) {
-                        Log.d(TAG, "onSuccess: ");
-
-                    }
-                })
-                .addOnFailureListener(new OnFailureListener() {
-                    @Override
-                    public void onFailure(@NonNull Exception e) {
-                        Log.d(TAG, "onFailure: " + e.getMessage());
-                    }
-                });
-
+        String name = edInput.getText().toString();
+        int age = Integer.parseInt(tvOutput.getText().toString());
+        mRef.child("user1").child("Name").setValue(name);
+        mRef.child("user1").child("Age").setValue(age);
     }
 }
