@@ -11,6 +11,7 @@ import android.widget.TextView;
 
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -59,9 +60,9 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
 
-                Map<String, Object> data= (Map<String, Object>) dataSnapshot.getValue();
-                Log.d(TAG, "onDataChange: "+data.get("Name"));
-                Log.d(TAG, "onDataChange: "+data.get("Age"));
+                Map<String, Object> data = (Map<String, Object>) dataSnapshot.getValue();
+                Log.d(TAG, "onDataChange: " + data.get("Name"));
+                Log.d(TAG, "onDataChange: " + data.get("Age"));
             }
 
             @Override
@@ -79,16 +80,21 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void writeData() {
-        String name = edInput.getText().toString();
-        int age = Integer.parseInt(tvOutput.getText().toString());
+//        String name = edInput.getText().toString();
+//        int age = Integer.parseInt(tvOutput.getText().toString());
 
-        Map<String, Object> databaseValue = new HashMap<>();
-
-        databaseValue.put("user1/Name", name);
-        databaseValue.put("user1/Age", age);
-
-        databaseValue.put("-M7b5Fe-JzTLhlIv2iNQ/Name", name);
-        databaseValue.put("-M7b5Fe-JzTLhlIv2iNQ/Age", age);
-        mRef.updateChildren(databaseValue);
+        Task<Void> task = mRef.child("user1").removeValue();
+        task.addOnSuccessListener(new OnSuccessListener<Void>() {
+            @Override
+            public void onSuccess(Void aVoid) {
+                Log.d(TAG, "onSuccess: Data Removed");
+            }
+        })
+                .addOnFailureListener(new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull Exception e) {
+                        Log.d(TAG, "onFailure: Data Removed Failed");
+                    }
+                });
     }
 }
