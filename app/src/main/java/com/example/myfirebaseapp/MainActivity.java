@@ -17,6 +17,7 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
+import java.util.HashMap;
 import java.util.Map;
 
 public class MainActivity extends AppCompatActivity {
@@ -81,8 +82,13 @@ public class MainActivity extends AppCompatActivity {
         String name = edInput.getText().toString();
         int age = Integer.parseInt(tvOutput.getText().toString());
 
-        String key = mRef.push().getKey();
-        mRef.child(key).child("Name").setValue(name);
-        mRef.child(key).child("Age").setValue(age);
+        Map<String, Object> databaseValue = new HashMap<>();
+
+        databaseValue.put("user1/Name", name);
+        databaseValue.put("user1/Age", age);
+
+        databaseValue.put("-M7b5Fe-JzTLhlIv2iNQ/Name", name);
+        databaseValue.put("-M7b5Fe-JzTLhlIv2iNQ/Age", age);
+        mRef.updateChildren(databaseValue);
     }
 }
