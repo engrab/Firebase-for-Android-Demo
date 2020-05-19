@@ -30,6 +30,7 @@ public class MainActivity extends AppCompatActivity {
     EditText tvOutput;
     private FirebaseDatabase mDatabase;
     private DatabaseReference mRef;
+    private ChildEventListener mListener;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -54,22 +55,17 @@ public class MainActivity extends AppCompatActivity {
         });
 
 
-    }
-
-
-    private void readData() {
-        mRef.addChildEventListener(new ChildEventListener() {
+        mListener = new ChildEventListener() {
             @Override
             public void onChildAdded(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
-                Map<String, Object> data = (Map<String, Object>) dataSnapshot.getValue();
-                Log.d(TAG, "onChildAdded: Name"+data.get("Name"));
-                Log.d(TAG, "onChildAdded: Age"+data.get("Age"));
+                Person person = dataSnapshot.getValue(Person.class);
+                Log.d(TAG, "onChildAdded: "+person.getName());
+                Log.d(TAG, "onChildAdded: "+person.getAge());
             }
 
             @Override
             public void onChildChanged(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
 
-                Log.d(TAG, "onChildChanged: called");
             }
 
             @Override
@@ -86,7 +82,21 @@ public class MainActivity extends AppCompatActivity {
             public void onCancelled(@NonNull DatabaseError databaseError) {
 
             }
-        });
+        };
+        mRef.addChildEventListener(mListener);
+
+    }
+
+    @Override
+    protected void onDestroy() {
+
+        mRef.removeEventListener(mListener);
+        super.onDestroy();
+
+    }
+
+    private void readData() {
+
     }
 
     private void initView() {
@@ -99,12 +109,10 @@ public class MainActivity extends AppCompatActivity {
         String name = edInput.getText().toString();
         int age = Integer.parseInt(tvOutput.getText().toString());
 
-        String key = mRef.push().getKey();
-        Map<String , Object> insertionValues = new HashMap<>();
-        insertionValues.put("Name", name);
-        insertionValues.put("Age", age);
+        Person person = new Person(name, age);
 
-        mRef.child(key).setValue(insertionValues);
+        String key = mRef.push().getKey();
+        mRef.child(key).setValue(person);
 
 
     }
