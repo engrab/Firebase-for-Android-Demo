@@ -1,6 +1,7 @@
 package com.example.myfirebaseapp;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.os.Bundle;
@@ -12,6 +13,7 @@ import android.widget.TextView;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
+import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -36,7 +38,7 @@ public class MainActivity extends AppCompatActivity {
 
         initView();
         mDatabase = FirebaseDatabase.getInstance();
-        mRef = mDatabase.getReference("users");
+        mRef = mDatabase.getReference();
 
         findViewById(R.id.btn_write).setOnClickListener(new View.OnClickListener() {
             @Override
@@ -56,19 +58,33 @@ public class MainActivity extends AppCompatActivity {
 
 
     private void readData() {
-        mRef.child("user1").addListenerForSingleValueEvent(new ValueEventListener() {
+        mRef.addChildEventListener(new ChildEventListener() {
             @Override
-            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-
+            public void onChildAdded(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
                 Map<String, Object> data = (Map<String, Object>) dataSnapshot.getValue();
-                Log.d(TAG, "onDataChange: " + data.get("Name"));
-                Log.d(TAG, "onDataChange: " + data.get("Age"));
+                Log.d(TAG, "onChildAdded: Name"+data.get("Name"));
+                Log.d(TAG, "onChildAdded: Age"+data.get("Age"));
+            }
+
+            @Override
+            public void onChildChanged(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
+
+                Log.d(TAG, "onChildChanged: called");
+            }
+
+            @Override
+            public void onChildRemoved(@NonNull DataSnapshot dataSnapshot) {
+
+            }
+
+            @Override
+            public void onChildMoved(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
+
             }
 
             @Override
             public void onCancelled(@NonNull DatabaseError databaseError) {
 
-                Log.d(TAG, "onCancelled: " + databaseError.getMessage());
             }
         });
     }
@@ -80,21 +96,16 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void writeData() {
-//        String name = edInput.getText().toString();
-//        int age = Integer.parseInt(tvOutput.getText().toString());
+        String name = edInput.getText().toString();
+        int age = Integer.parseInt(tvOutput.getText().toString());
 
-        Task<Void> task = mRef.child("user1").removeValue();
-        task.addOnSuccessListener(new OnSuccessListener<Void>() {
-            @Override
-            public void onSuccess(Void aVoid) {
-                Log.d(TAG, "onSuccess: Data Removed");
-            }
-        })
-                .addOnFailureListener(new OnFailureListener() {
-                    @Override
-                    public void onFailure(@NonNull Exception e) {
-                        Log.d(TAG, "onFailure: Data Removed Failed");
-                    }
-                });
+        String key = mRef.push().getKey();
+        Map<String , Object> insertionValues = new HashMap<>();
+        insertionValues.put("Name", name);
+        insertionValues.put("Age", age);
+
+        mRef.child(key).setValue(insertionValues);
+
+
     }
 }
