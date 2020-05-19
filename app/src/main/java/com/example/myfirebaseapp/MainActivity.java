@@ -3,25 +3,22 @@ package com.example.myfirebaseapp;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
-import android.widget.TextView;
 
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.android.gms.tasks.Task;
 import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.ValueEventListener;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -31,6 +28,9 @@ public class MainActivity extends AppCompatActivity {
     private FirebaseDatabase mDatabase;
     private DatabaseReference mRef;
     private ChildEventListener mListener;
+    private RecyclerView mRecyclerView;
+    private UserAdapter mUserAdapter;
+    private List<User> mList;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -40,6 +40,12 @@ public class MainActivity extends AppCompatActivity {
         initView();
         mDatabase = FirebaseDatabase.getInstance();
         mRef = mDatabase.getReference();
+
+        mList = new ArrayList<>();
+
+        mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
+        mUserAdapter =  new UserAdapter(this, mList);
+        mRecyclerView.setAdapter(mUserAdapter);
 
         findViewById(R.id.btn_write).setOnClickListener(new View.OnClickListener() {
             @Override
@@ -58,9 +64,9 @@ public class MainActivity extends AppCompatActivity {
         mListener = new ChildEventListener() {
             @Override
             public void onChildAdded(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
-                Person person = dataSnapshot.getValue(Person.class);
-                Log.d(TAG, "onChildAdded: "+person.getName());
-                Log.d(TAG, "onChildAdded: "+person.getAge());
+               User user = dataSnapshot.getValue(User.class);
+               mList.add(user);
+               mUserAdapter.notifyDataSetChanged();
             }
 
             @Override
@@ -103,16 +109,19 @@ public class MainActivity extends AppCompatActivity {
         edInput = findViewById(R.id.editTextData);
         tvOutput = findViewById(R.id.tvOutput);
 
+        mRecyclerView = findViewById(R.id.user_recyclerview);
+
+
     }
 
     private void writeData() {
         String name = edInput.getText().toString();
         int age = Integer.parseInt(tvOutput.getText().toString());
 
-        Person person = new Person(name, age);
+        User user = new User(name, age);
 
         String key = mRef.push().getKey();
-        mRef.child(key).setValue(person);
+        mRef.child(key).setValue(user);
 
 
     }
