@@ -65,6 +65,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onChildAdded(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
                User user = dataSnapshot.getValue(User.class);
+               user.setUid(dataSnapshot.getKey());
                mList.add(user);
                mUserAdapter.notifyDataSetChanged();
             }
