@@ -78,6 +78,10 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onChildRemoved(@NonNull DataSnapshot dataSnapshot) {
 
+                User user = dataSnapshot.getValue(User.class);
+                user.setUid(dataSnapshot.getKey());
+                mList.remove(user);
+                mUserAdapter.notifyDataSetChanged();
             }
 
             @Override
