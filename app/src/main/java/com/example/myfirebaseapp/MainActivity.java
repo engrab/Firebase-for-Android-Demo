@@ -1,6 +1,10 @@
 package com.example.myfirebaseapp;
 
 import androidx.appcompat.app.AppCompatActivity;
+
+import android.graphics.Bitmap;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.EditText;
@@ -10,6 +14,11 @@ import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -27,7 +36,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         initView();
-        mRef = FirebaseStorage.getInstance().getReference("docs/");
+        mRef = FirebaseStorage.getInstance().getReference("doc/");
 
 
         findViewById(R.id.btn_write).setOnClickListener(new View.OnClickListener() {
@@ -57,6 +66,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void readData() {
 
+
     }
 
     private void initView() {
@@ -68,20 +78,44 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void writeData() {
-        StorageReference child = mRef.child("office/abc.txt");
-        String fileData = "This is demo data";
+        Bitmap bitmap = readImage();
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
 
-        UploadTask uploadTask = child.putBytes(fileData.getBytes());
-        uploadTask.addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
-            @Override
-            public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+        if (bitmap != null) {
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 100, byteArrayOutputStream);
+        }
 
-                Toast.makeText(MainActivity.this, "Data upload successfully", Toast.LENGTH_LONG).show();
+        mRef.child("images/unnamed.jpg").putBytes(byteArrayOutputStream.toByteArray())
+                .addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+                    @Override
+                    public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+                        Toast.makeText(MainActivity.this, "Upload Successfuly",
+                                Toast.LENGTH_LONG).show();
+                    }
+                });
+
+    }
+
+    private Bitmap readImage(){
+        InputStream inputStream = null;
+        try {
+
+            inputStream = getAssets().open("unnamed.jpg");
+
+            BitmapDrawable bitmapDrawable = (BitmapDrawable) Drawable.createFromStream(inputStream, null);
+
+            return bitmapDrawable.getBitmap();
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+        if (inputStream != null){
+            try {
+                inputStream.close();
+            } catch (IOException e) {
+                e.printStackTrace();
             }
-        });
-
-
-
+        }
+        return null;
     }
 
 }
