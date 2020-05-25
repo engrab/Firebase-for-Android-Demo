@@ -6,6 +6,7 @@ import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.Toast;
@@ -16,6 +17,9 @@ import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -78,22 +82,36 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void writeData() {
-        Bitmap bitmap = readImage();
-        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
 
-        if (bitmap != null) {
-            bitmap.compress(Bitmap.CompressFormat.JPEG, 100, byteArrayOutputStream);
+        InputStream inputStream = null;
+        try {
+            inputStream = new FileInputStream(new File(getFilesDir(), "unnamed.jpg"));
+
+            Log.d(TAG, "writeData: ");
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
         }
-
-        mRef.child("images/unnamed.jpg").putBytes(byteArrayOutputStream.toByteArray())
-                .addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
-                    @Override
-                    public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
-                        Toast.makeText(MainActivity.this, "Upload Successfuly",
-                                Toast.LENGTH_LONG).show();
+        UploadTask uploadTask = null;
+        if (inputStream != null) {
+            uploadTask = mRef.child("image/unnamed.jpg").putStream(inputStream);
+            Log.d(TAG, "writeData: inputstream");
+        }
+        final InputStream finalInputStream = inputStream;
+        if (uploadTask != null) {
+            uploadTask.addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+                @Override
+                public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+                    if (finalInputStream != null){
+                        try {
+                            finalInputStream.close();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
                     }
-                });
-
+                    Toast.makeText(MainActivity.this, "Picture Uploaded Successfuly", Toast.LENGTH_LONG).show();
+                }
+            });
+        }
     }
 
     private Bitmap readImage(){
