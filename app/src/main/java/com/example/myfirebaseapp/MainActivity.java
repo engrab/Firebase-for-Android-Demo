@@ -1,10 +1,18 @@
 package com.example.myfirebaseapp;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.Manifest;
+import android.content.Intent;
+import android.content.IntentSender;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -28,10 +36,13 @@ import java.io.OutputStream;
 public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = MainActivity.class.getName();
+    private static final int EXTERNAL_STORAGE_CODE = 1000;
+    private static final int PICK_IMAGE_REQUEST = 1001;
     EditText edInput;
     EditText tvOutput;
 
     StorageReference mRef;
+    private boolean mGranted;
 
 
     @Override
@@ -57,8 +68,6 @@ public class MainActivity extends AppCompatActivity {
         });
 
 
-
-
     }
 
     @Override
@@ -71,6 +80,8 @@ public class MainActivity extends AppCompatActivity {
     private void readData() {
 
 
+
+
     }
 
     private void initView() {
@@ -78,62 +89,50 @@ public class MainActivity extends AppCompatActivity {
         tvOutput = findViewById(R.id.tvOutput);
 
 
-
     }
 
     private void writeData() {
-
-        InputStream inputStream = null;
-        try {
-            inputStream = new FileInputStream(new File(getFilesDir(), "unnamed.jpg"));
-
-            Log.d(TAG, "writeData: ");
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            if (!mGranted) {
+                if (checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+                    requestPermissions(new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, EXTERNAL_STORAGE_CODE);
+                    return;
+                }
+            }
         }
-        UploadTask uploadTask = null;
-        if (inputStream != null) {
-            uploadTask = mRef.child("image/unnamed.jpg").putStream(inputStream);
-            Log.d(TAG, "writeData: inputstream");
+        Intent intent = new Intent();
+        intent.setType("image/*");
+        intent.setAction(Intent.ACTION_GET_CONTENT);
+        startActivityForResult(Intent.createChooser(intent, "select Image"), PICK_IMAGE_REQUEST);
+
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == EXTERNAL_STORAGE_CODE && grantResults.length>0){
+            if (grantResults[0]== PackageManager.PERMISSION_GRANTED){
+                mGranted = true;
+                Toast.makeText(MainActivity.this, "Permission Granted", Toast.LENGTH_LONG).show();
+            }
+            else {
+                Toast.makeText(MainActivity.this, "Permission needed", Toast.LENGTH_LONG).show();
+            }
         }
-        final InputStream finalInputStream = inputStream;
-        if (uploadTask != null) {
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == PICK_IMAGE_REQUEST && data != null){
+            Uri imageUri = data.getData();
+            UploadTask uploadTask = mRef.child("images/" + imageUri.getLastPathSegment()).putFile(imageUri);
             uploadTask.addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
                 @Override
                 public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
-                    if (finalInputStream != null){
-                        try {
-                            finalInputStream.close();
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                    Toast.makeText(MainActivity.this, "Picture Uploaded Successfuly", Toast.LENGTH_LONG).show();
+                    Toast.makeText(MainActivity.this, "Image uploaded successfuly", Toast.LENGTH_LONG).show();
                 }
             });
         }
     }
-
-    private Bitmap readImage(){
-        InputStream inputStream = null;
-        try {
-
-            inputStream = getAssets().open("unnamed.jpg");
-
-            BitmapDrawable bitmapDrawable = (BitmapDrawable) Drawable.createFromStream(inputStream, null);
-
-            return bitmapDrawable.getBitmap();
-        }catch (Exception e){
-            e.printStackTrace();
-        }
-        if (inputStream != null){
-            try {
-                inputStream.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-        return null;
-    }
-
 }
