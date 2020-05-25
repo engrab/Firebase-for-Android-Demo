@@ -17,20 +17,17 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
+import android.widget.ProgressBar;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.OnProgressListener;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+
 
 
 public class MainActivity extends AppCompatActivity {
@@ -38,11 +35,12 @@ public class MainActivity extends AppCompatActivity {
     private static final String TAG = MainActivity.class.getName();
     private static final int EXTERNAL_STORAGE_CODE = 1000;
     private static final int PICK_IMAGE_REQUEST = 1001;
-    EditText edInput;
-    EditText tvOutput;
+
 
     StorageReference mRef;
     private boolean mGranted;
+    private ProgressBar mProgressBar;
+    private TextView mProgressText;
 
 
     @Override
@@ -51,6 +49,8 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         initView();
+        mProgressText.setVisibility(View.INVISIBLE);
+        mProgressBar.setVisibility(View.INVISIBLE);
         mRef = FirebaseStorage.getInstance().getReference("doc/");
 
 
@@ -85,8 +85,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void initView() {
-        edInput = findViewById(R.id.editTextData);
-        tvOutput = findViewById(R.id.tvOutput);
+        mProgressBar = findViewById(R.id.progressBar);
+        mProgressText = findViewById(R.id.tv_progress);
 
 
     }
@@ -127,10 +127,26 @@ public class MainActivity extends AppCompatActivity {
         if (requestCode == PICK_IMAGE_REQUEST && data != null){
             Uri imageUri = data.getData();
             UploadTask uploadTask = mRef.child("images/" + imageUri.getLastPathSegment()).putFile(imageUri);
-            uploadTask.addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+            mProgressText.setVisibility(View.VISIBLE);
+            mProgressBar.setVisibility(View.VISIBLE);
+            mProgressBar.setIndeterminate(false);
+
+            uploadTask.addOnProgressListener(new OnProgressListener<UploadTask.TaskSnapshot>() {
+                @Override
+                public void onProgress(@NonNull UploadTask.TaskSnapshot taskSnapshot) {
+                    double progress = (100*taskSnapshot.getBytesTransferred())/taskSnapshot.getTotalByteCount();
+                    mProgressText.setText(progress+" %");
+                    mProgressBar.setVisibility(View.VISIBLE);
+                    mProgressBar.setMax(100);
+                    mProgressBar.setProgress((int) progress);
+
+                }
+            })
+            .addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
                 @Override
                 public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
                     Toast.makeText(MainActivity.this, "Image uploaded successfuly", Toast.LENGTH_LONG).show();
+                    mProgressText.append("Upload Finished");
                 }
             });
         }
