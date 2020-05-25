@@ -21,6 +21,7 @@ import android.widget.Toast;
 
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.storage.FileDownloadTask;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.OnProgressListener;
 import com.google.firebase.storage.StorageReference;
@@ -92,22 +93,14 @@ public class MainActivity extends AppCompatActivity {
         }
 
 
-         final File outputFile = new File(Environment.getExternalStorageDirectory(), "aliya.jpg");
+         final File outputFile = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "aliya.jpg");
 
-        long IMAGE_SIZE = 1024*1024*5;
-        mRef.child("images/image:222975").getBytes(IMAGE_SIZE)
-                .addOnSuccessListener(new OnSuccessListener<byte[]>() {
+
+        mRef.child("images/image:222979").getFile(outputFile)
+                .addOnSuccessListener(new OnSuccessListener<FileDownloadTask.TaskSnapshot>() {
                     @Override
-                    public void onSuccess(byte[] bytes) {
-                        mImageView.setImageBitmap(BitmapFactory.decodeByteArray(bytes, 0, bytes.length));
-                        try {
-                            FileOutputStream fileOutputStream = new FileOutputStream(outputFile);
-                            fileOutputStream.write(bytes);
-                            fileOutputStream.close();
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                        }
-                        Log.d(TAG, "onSuccess: Image set");
+                    public void onSuccess(FileDownloadTask.TaskSnapshot taskSnapshot) {
+                        mImageView.setImageURI(Uri.fromFile(outputFile));
                     }
                 })
                 .addOnFailureListener(new OnFailureListener() {
@@ -116,8 +109,6 @@ public class MainActivity extends AppCompatActivity {
                         Toast.makeText(MainActivity.this, "Something went wrong", Toast.LENGTH_LONG).show();
                     }
                 });
-
-
     }
 
     private void initView() {
